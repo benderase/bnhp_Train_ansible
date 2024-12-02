@@ -1,0 +1,70 @@
+Here’s an **Ansible exercise** focused on replacing a specific line in the `sshd_config` file. This exercise will introduce the team to the `lineinfile` module, which is ideal for managing individual lines in configuration files.
+
+---
+
+### **Exercise: Replacing a Line in `sshd_config`**
+#### Objective  
+Update the SSH configuration file (`/etc/ssh/sshd_config`) to ensure a specific setting is configured. For example:  
+- Replace the `PermitRootLogin` directive with `PermitRootLogin no`.  
+- Ensure the file reflects this setting and restart the `sshd` service to apply changes.
+
+---
+
+### **Playbook File: `update_sshd_config.yml`**
+```yaml
+- name: Update sshd_config to disable root login
+  hosts: all
+  become: yes
+  tasks:
+    - name: Backup the sshd_config file
+      copy:
+        src: /etc/ssh/sshd_config
+        dest: /etc/ssh/sshd_config.backup
+        remote_src: yes
+
+    - name: Disable root login in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+        backup: yes
+
+    - name: Restart the SSH service
+      service:
+        name: sshd
+        state: restarted
+```
+
+---
+
+### **Explanation**  
+1. **Backup Task**:  
+   A backup of the original `sshd_config` file is created using the `copy` module. This ensures a safety net in case anything goes wrong.  
+
+2. **Modify Task**:  
+   The `lineinfile` module checks for the line starting with `PermitRootLogin` and ensures it is replaced with `PermitRootLogin no`.  
+   - `regexp`: Matches lines starting with `PermitRootLogin`.  
+   - `line`: The new line to enforce.  
+   - `backup`: Creates a backup of the file before modifying it.  
+
+3. **Restart Task**:  
+   The `service` module restarts the SSH daemon to apply the updated configuration.  
+
+---
+
+### **Commands to Run**  
+```bash
+ansible-playbook -i inventory update_sshd_config.yml
+```
+
+---
+
+### **Expected Outcome**  
+1. The `PermitRootLogin` directive in `/etc/ssh/sshd_config` is updated to `PermitRootLogin no`.  
+2. SSH service is restarted successfully.  
+3. If you check `/etc/ssh/sshd_config`, the updated line should be present.  
+
+---
+
+Would you like additional enhancements, such as making this playbook handle multiple SSH configuration settings?
